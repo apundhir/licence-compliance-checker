@@ -21,7 +21,7 @@
     <div class="container mx-auto p-4 md:p-8 max-w-4xl">
         <header class="text-center mb-8">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Open-Source License Compliance Checker</h1>
-            <p class="text-md text-gray-600 mt-2">Upload your dependency file to check for license compliance.</p>
+            <p class="text-md text-gray-600 mt-2">Upload your dependency file, or provide a public GitHub repository URL to check for license compliance.</p>
         </header>
 
         <main>
@@ -45,6 +45,23 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                            <div class="w-full border-t border-gray-300"></div>
+                        </div>
+                        <div class="relative flex justify-center">
+                            <span class="bg-white px-2 text-sm text-gray-500">OR</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="repo-url" class="block text-sm font-medium text-gray-700">Public GitHub Repository URL</label>
+                        <div class="mt-1">
+                            <input type="text" name="repo_url" id="repo-url" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="https://github.com/user/repo">
+                        </div>
+                    </div>
+
                     <div>
                         <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             Check Compliance
@@ -126,6 +143,7 @@
     <script>
         const uploadForm = document.getElementById('upload-form');
         const dependencyFileInput = document.getElementById('dependency-file-input');
+        const repoUrlInput = document.getElementById('repo-url');
         const resultsContainer = document.getElementById('results-container');
         const resultsBody = document.getElementById('results-body');
         const dropZone = document.getElementById('drop-zone');
@@ -150,13 +168,22 @@
             if (files.length > 0) {
                 dependencyFileInput.files = files;
                 fileNameDisplay.textContent = files[0].name;
+                repoUrlInput.value = ''; // Clear repo URL if a file is dropped
             }
         });
         
         dependencyFileInput.addEventListener('change', () => {
             if (dependencyFileInput.files.length > 0) {
                 fileNameDisplay.textContent = dependencyFileInput.files[0].name;
+                repoUrlInput.value = ''; // Clear repo URL if a file is selected
             } else {
+                fileNameDisplay.textContent = 'No file selected';
+            }
+        });
+
+        repoUrlInput.addEventListener('input', () => {
+            if (repoUrlInput.value) {
+                dependencyFileInput.value = ''; // Clear file input
                 fileNameDisplay.textContent = 'No file selected';
             }
         });
@@ -165,13 +192,20 @@
         uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            if (dependencyFileInput.files.length === 0) {
-                alert('Please select a file to upload.');
+            const repoUrl = repoUrlInput.value.trim();
+            const hasFile = dependencyFileInput.files.length > 0;
+
+            if (!hasFile && !repoUrl) {
+                alert('Please either upload a file or provide a GitHub repository URL.');
                 return;
             }
 
             const formData = new FormData();
-            formData.append('dependencyFile', dependencyFileInput.files[0]);
+            if (hasFile) {
+                formData.append('dependencyFile', dependencyFileInput.files[0]);
+            } else {
+                formData.append('repo_url', repoUrl);
+            }
             
             // Reset UI
             resultsContainer.classList.add('hidden');
